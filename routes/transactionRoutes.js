@@ -196,9 +196,27 @@ router.post('/webhook', async (req, res) => {
         headers: req.headers
     });
 
-    const billingid = req.body.billingid || req.body.bill_id || req.body.billing_id;
-    const external_reference = req.body.reference || req.body.external_reference || req.body.externalref;
-    const state = (req.body.state || req.body.status || '').toString().toLowerCase();
+    // Certains environnements (Rails, AppRunner…) enveloppent la charge utile dans notification_params
+    let payload = req.body;
+    if (typeof payload === 'string') {
+        try { payload = JSON.parse(payload); } catch (err) { console.warn('[webhook] Impossible de parser payload string:', err.message); }
+    }
+    if (payload && payload.notification_params) {
+        if (typeof payload.notification_params === 'string') {
+            try {
+                payload = JSON.parse(payload.notification_params);
+            } catch (err) {
+                console.warn('[webhook] Impossible de parser notification_params string:', err.message);
+                payload = payload.notification_params;
+            }
+        } else {
+            payload = payload.notification_params;
+        }
+    }
+
+    const billingid = payload.billingid || payload.bill_id || payload.billing_id;
+    const external_reference = payload.reference || payload.external_reference || payload.externalref;
+    const state = (payload.state || payload.status || '').toString().toLowerCase();
 
     console.log(`🔍 [webhook] Données extraites:`, {
         billingid,
@@ -236,7 +254,7 @@ router.post('/webhook', async (req, res) => {
         // Mettre à jour la facture existante en se basant sur bill_id ou external_reference
         const [result] = await db.query(
             'UPDATE factures SET statuspay = ?, updated_at = NOW(), raw_callback = ? WHERE bill_id = ? OR external_reference = ?',
-            [statuspay, JSON.stringify(req.body), billingid || null, external_reference || null]
+            [statuspay, JSON.stringify(payload), billingid || null, external_reference || null]
         );
 
         if (result.affectedRows > 0) {
@@ -260,7 +278,7 @@ router.post('/webhook', async (req, res) => {
             try {
                 await db.query(
                     `INSERT INTO factures_logs (billingid, external_reference, payload, created_at) VALUES (?, ?, ?, NOW())`,
-                    [billingid || null, external_reference || null, JSON.stringify(req.body)]
+                    [billingid || null, external_reference || null, JSON.stringify(payload)]
                 );
                 console.log('📝 [webhook] Log inséré dans factures_logs');
             } catch (logError) {
