@@ -4,8 +4,8 @@ const axios = require('axios');
 const db = require('../db');
 
 // Remplacez par vos vraies infos d'authentification Ebilling
-const EBILLING_USERNAME = process.env.EBILLING_USERNAME || 'smeby33';
-const EBILLING_SHARED_KEY = process.env.EBILLING_SHARED_KEY || '0d14ed02-33fc-496b-9e03-04a00563d270';
+const EBILLING_USERNAME = process.env.EBILLING_USERNAME || 'afup';
+const EBILLING_SHARED_KEY = process.env.EBILLING_SHARED_KEY || 'b3b8814e-4639-46a1-97c3-bf37401dc54b';
 const EBILLING_URL = 'https://lab.billing-easy.net/api/v1/merchant/e_bills';
 
 // Middleware de logging pour toutes les routes
