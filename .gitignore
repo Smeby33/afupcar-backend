@@ -1,0 +1,25 @@
+node_modules/
+uploads/
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Build
+dist/
+coverage/
+
+# Misc
+.DS_Store
+npm-debug.log*
