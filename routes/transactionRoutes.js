@@ -248,12 +248,12 @@ router.post('/webhook', async (req, res) => {
             billingid,
             external_reference,
             statuspay,
-            query: 'UPDATE factures SET statuspay = ?, updated_at = NOW(), raw_callback = ? WHERE bill_id = ? OR external_reference = ?'
+            query: 'UPDATE factures SET statuspay = ?, raw_callback = ? WHERE bill_id = ? OR external_reference = ?'
         });
 
         // Mettre à jour la facture existante en se basant sur bill_id ou external_reference
         const [result] = await db.query(
-            'UPDATE factures SET statuspay = ?, updated_at = NOW(), raw_callback = ? WHERE bill_id = ? OR external_reference = ?',
+            'UPDATE factures SET statuspay = ?, raw_callback = ? WHERE bill_id = ? OR external_reference = ?',
             [statuspay, JSON.stringify(payload), billingid || null, external_reference || null]
         );
 
