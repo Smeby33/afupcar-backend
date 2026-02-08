@@ -264,6 +264,27 @@ router.post('/webhook', async (req, res) => {
                 external_reference,
                 statuspay
             });
+
+            // Mettre à jour le statut de la réservation si le paiement est validé
+            if (statuspay === 1 && external_reference) {
+                try {
+                    console.log(`🔄 [webhook] Mise à jour statut réservation ${external_reference} vers "confirme"`);
+                    const [resaResult] = await db.query(
+                        'UPDATE reservation SET statut = ? WHERE id = ?',
+                        ['confirme', external_reference]
+                    );
+                    
+                    if (resaResult.affectedRows > 0) {
+                        console.log(`✅ [webhook] Réservation ${external_reference} mise à jour (statut=confirme)`);
+                    } else {
+                        console.warn(`⚠️ [webhook] Aucune réservation trouvée avec id=${external_reference}`);
+                    }
+                } catch (resaErr) {
+                    console.error('❌ [webhook] Erreur mise à jour réservation:', resaErr.message);
+                    // On continue même si la mise à jour de la réservation échoue
+                }
+            }
+
             return res.status(200).json({ 
                 success: true, 
                 message: `Facture mise à jour (statuspay=${statuspay})`,
@@ -437,6 +458,39 @@ router.post('/updateFactureStatus', async (req, res) => {
     }
 
     try {
+        // Vérifier d'abord si le webhook a déjà traité cette facture
+        console.log(`🔍 [updateFactureStatus] Vérification existence raw_callback pour:`, { billingid, reference });
+        const [checkRows] = await db.query(
+            'SELECT raw_callback, statuspay FROM factures WHERE bill_id = ? AND external_reference = ?',
+            [billingid, reference]
+        );
+
+        if (checkRows.length === 0) {
+            console.warn(`⚠️ [updateFactureStatus] Aucune facture trouvée pour:`, { billingid, reference });
+            return res.status(404).json({ 
+                error: 'Aucune facture trouvée pour ces identifiants.',
+                billingid,
+                reference
+            });
+        }
+
+        const facture = checkRows[0];
+        if (facture.raw_callback) {
+            console.warn(`🚫 [updateFactureStatus] Facture déjà traitée par webhook:`, { 
+                billingid, 
+                reference, 
+                currentStatus: facture.statuspay 
+            });
+            return res.status(409).json({ 
+                error: 'Cette facture a déjà été traitée par le webhook Ebilling.',
+                billingid,
+                reference,
+                statuspay: facture.statuspay,
+                message: 'Impossible de modifier manuellement une facture déjà confirmée par Ebilling.'
+            });
+        }
+
+        // Procéder à la mise à jour si le webhook n'a pas encore traité
         console.log(`🔄 [updateFactureStatus] Exécution requête SQL:`, {
             query: 'UPDATE factures SET statuspay = 1 WHERE bill_id = ? AND external_reference = ?',
             params: [billingid, reference]
@@ -456,6 +510,25 @@ router.post('/updateFactureStatus', async (req, res) => {
 
         if (result.affectedRows > 0) {
             console.log(`✅ [updateFactureStatus] Statut mis à jour avec succès pour:`, { billingid, reference });
+            
+            // Mettre à jour le statut de la réservation également
+            try {
+                console.log(`🔄 [updateFactureStatus] Mise à jour statut réservation ${reference} vers "confirme"`);
+                const [resaResult] = await db.query(
+                    'UPDATE reservation SET statut = ? WHERE id = ?',
+                    ['confirme', reference]
+                );
+                
+                if (resaResult.affectedRows > 0) {
+                    console.log(`✅ [updateFactureStatus] Réservation ${reference} mise à jour (statut=confirme)`);
+                } else {
+                    console.warn(`⚠️ [updateFactureStatus] Aucune réservation trouvée avec id=${reference}`);
+                }
+            } catch (resaErr) {
+                console.error('❌ [updateFactureStatus] Erreur mise à jour réservation:', resaErr.message);
+                // On continue même si la mise à jour de la réservation échoue
+            }
+            
             res.json({ 
                 success: true, 
                 message: 'Statut de paiement mis à jour.',
