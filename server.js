@@ -30,6 +30,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
     origin: ['http://localhost:5173', 'https://armadapwa.vercel.app' ,'https://armada-back.onrender.com','https://simu.billing-easy.net'   ]
 }));
