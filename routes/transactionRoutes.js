@@ -268,10 +268,10 @@ router.post('/webhook', async (req, res) => {
             // Mettre à jour le statut de la réservation si le paiement est validé
             if (statuspay === 1 && external_reference) {
                 try {
-                    console.log(`🔄 [webhook] Mise à jour statut réservation ${external_reference} vers "confirme"`);
+                    console.log(`🔄 [webhook] Mise à jour statut réservation ${external_reference} vers 1`);
                     const [resaResult] = await db.query(
                         'UPDATE reservation SET statut = ? WHERE id = ?',
-                        ['confirme', external_reference]
+                        [1, external_reference]
                     );
                     
                     if (resaResult.affectedRows > 0) {
@@ -513,10 +513,10 @@ router.post('/updateFactureStatus', async (req, res) => {
             
             // Mettre à jour le statut de la réservation également
             try {
-                console.log(`🔄 [updateFactureStatus] Mise à jour statut réservation ${reference} vers "confirme"`);
+                console.log(`🔄 [updateFactureStatus] Mise à jour statut réservation ${reference} vers 1`);
                 const [resaResult] = await db.query(
                     'UPDATE reservation SET statut = ? WHERE id = ?',
-                    ['confirme', reference]
+                    [1, reference]
                 );
                 
                 if (resaResult.affectedRows > 0) {
