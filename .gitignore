@@ -1,25 +1,50 @@
-    node_modules/
-uploads/
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables
 .env
 .env.*
+!.env.example
 
 # Logs
 logs/
 *.log
 npm-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Editors
+# Editors & IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
 
-# Build
+# Build & Production
 dist/
 coverage/
+build/
+
+# Uploads (except tracked files)
+uploads/*
 
 # Misc
-.DS_Store
-npm-debug.log*
+.cache/
+.env.local
+.env.*.local
